@@ -4,8 +4,7 @@ pragma solidity 0.6.0;
 contract Ipal {
     // using SafeMath for uint256;
     
-    /////////////////////////////////////////// IPAL /////////////////////////////////////////// 
-    address adminAddress    = 0xdCad3a6d3569DF655070DEd06cb7A1b2Ccd1D3AF;
+    address adminAddress    = 0x04Fa2c6673F3283681EA40D1f07314b3624Ab6e5;
     uint256 minBond         = 1000000;
     
     enum UnApproveReason {
@@ -122,50 +121,4 @@ contract Ipal {
     function getIpalKeys() public view returns(address[] memory v) {
         return ipalKeys;
     }
-    
-    
-    /////////////////////////////////////////// CIPAL implemet1 ///////////////////////////////////////////
-    mapping(address=>string) public cipals;
-    
-    /*
-    *param @cipalDeclaration: '{"ipals":[{"type":1,"address":0}]}'
-    */
-    
-    function cipalClaim(string memory cipalDeclaration, address userAddr, bytes32 R, bytes32 S, uint8 V) public {
-        bytes memory d = abi.encodePacked(cipalDeclaration, userAddr);
-        bytes32 hash = sha256(d);
-        address expected_addr = ecrecover(hash, V, R, S);
-        require (expected_addr == userAddr);
-        
-        cipals[userAddr] = cipalDeclaration;
-    }
-    
-    // /////////////////////////////////////////// CIPAL implemet2 ///////////////////////////////////////////
-    // struct IpalIndex {
-    //     address ipalAddr;
-    //     uint16 ipalType;
-    // }
-    
-    // struct CIpalItem {
-    //     bool exist;
-    //     IpalIndex[] ipals;
-    // }
-    
-    // mapping(address=>CIpalItem) public cipals2;
-    
-    // function cipalClaim2(address ipalAddr, uint16 ipalType, address userAddr, bytes32 R, bytes32 S, uint8 V) public {
-    //     bytes memory d = abi.encodePacked(ipalAddr, ipalType, userAddr);
-    //     bytes32 hash = sha256(d);
-    //     address expected_addr = ecrecover(hash, V, R, S);
-    //     require (expected_addr == userAddr);
-        
-    //     CIpalItem memory cipal = cipals[userAddr];
-    //     if (cipal.exist == true) {
-            
-    //     } else {
-    //         cipal.exist = true;
-    //     }
-    // }
 }
-
-
