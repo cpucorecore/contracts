@@ -4,8 +4,8 @@ pragma solidity 0.6.0;
 contract Ipal {
     // using SafeMath for uint256;
     
-    address adminAddress    = 0x04Fa2c6673F3283681EA40D1f07314b3624Ab6e5;
-    uint256 minBond         = 1000000;
+    address public adminAddress    = 0x04Fa2c6673F3283681EA40D1f07314b3624Ab6e5;
+    uint256 public minBond  = 1000000;
     
     enum UnApproveReason {
         NONE,
@@ -22,17 +22,14 @@ contract Ipal {
         UnApproveReason unApproveReason;
     }
     
+    address[] public ipalKeys;
     mapping(address=>IpalItem) public ipals;
     mapping(string=>bool) public monikerExistChecker;
-    address[] public ipalKeys;
     
-    
-    /*
-    *param @ipalDeclaration: '{"website":"netcloth.org","details":"netcloth-offical","endpoints":[{"type":1,"endpoint":"http://47.104.189.5"}]}'
-    */
     function ipalClaim(string memory moniker, string memory ipalDeclaration) public payable {
         require (0 == ipals[msg.sender].bond);
         require (msg.value >= minBond);
+        require (bytes(moniker).length > 0);
         require (false == monikerExistChecker[moniker]);
         
         IpalItem memory ipal;
@@ -57,10 +54,15 @@ contract Ipal {
         bytes memory d2 = abi.encodePacked(ipal.moniker);
         bytes32 hash1 = sha256(d1);
         bytes32 hash2 = sha256(d2);
-        require (hash1 != hash2 && monikerExistChecker[moniker] == false);
+        require (monikerExistChecker[moniker] == false || hash1 == hash2);
         
         uint256 targetBond = ipal.bond + msg.value; //TODO CHECK overflow
         require (targetBond >= minBond);
+        
+        monikerExistChecker[moniker] = true;
+        if (hash1 != hash2) {
+            monikerExistChecker[ipal.moniker] = false;
+        }
         
         ipal.moniker = moniker;
         ipal.ipalDeclaration = ipalDeclaration;
@@ -69,19 +71,24 @@ contract Ipal {
         ipal.unApproveReason = UnApproveReason.UPDATE;
         
         ipals[msg.sender] = ipal;
-        monikerExistChecker[moniker] = true;
+
     }
     
-    function ipalUnClaim() public {
+    function ipalUnClaim() public payable {
         IpalItem memory ipal = ipals[msg.sender];
         
         require(ipal.bond != 0);
         
         msg.sender.transfer(ipal.bond);
         
+        monikerExistChecker[ipal.moniker] = false;
+        
+        ipal.moniker = "";
+        ipal.ipalDeclaration = "";
         ipal.bond = 0;
         ipal.isApproved = false;
         ipal.unApproveReason = UnApproveReason.UNCLAIM;
+        
         
         ipals[msg.sender] = ipal;
     }
